@@ -12,37 +12,38 @@ randomGenerator = random.Random(terrainSeed)
 metaballPositions = [
     # (0, 0)
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
     (
-        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1), 
+        randomGenerator.randint(int(-GameConstants.TILE_SCREEN_WIDTH / 2), int(GameConstants.TILE_SCREEN_WIDTH / 2) + 1),
         randomGenerator.randint(int(-GameConstants.TILE_SCREEN_HEIGHT / 2), int(GameConstants.TILE_SCREEN_HEIGHT / 2) + 1)
     ),
 ]
 metaballConstant = 3 # the metaball summing formula (inverse distance) is multiplied by this constant
 
-metaballThreshold = 2 # if the metaball sum is higher than this, then it's land. otherwise, it's water.
+sandThreshold = 2 # if the metaball sum is higher than this, then it's sand. otherwise, it's water.
+grassThreshold = 2.1 # # if the metaball sum is higher than this, then it's grass. otherwise, it's sand.
 
 ## Utility functions
 
@@ -70,12 +71,14 @@ def DetermineColor(tileX, tileY):
             distance = 1
         # add inverse distance to total sum
         metaballSum += metaballConstant / distance
-    
+
     # would use ternary operator here, but cannot due to restraints of the assignment.
-    if metaballSum > metaballThreshold:
-        return "green"
+    if metaballSum > grassThreshold:
+        return "#0ba34b"
+    elif metaballSum > sandThreshold:
+        return "#f0e9b9"
     else:
-        return "blue"
+        return "#76cce8"
 
 def DrawTerrain(screen, turtle):
     # set turtle size so that stamping would cause an appropriately-sized square to appear
