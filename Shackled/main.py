@@ -7,7 +7,7 @@ import time
 # Constants (you can change these)
 SCREEN_WIDTH = 900
 SCREEN_HEIGHT = 450
-WINDOW_TITLE = "Shackled"
+WINDOW_TITLE = "Hide & Seek"
 
 # Set up the screen object
 turtle.setup(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -30,35 +30,111 @@ for i in range(30):
     t.color(brightness, brightness, brightness)
     t.penup()
     t.goto(0, -size / 2)
-    t.write("Hide & Seek", align="center", font=("Arial", size, "normal"))
+    t.write("Made with Turtle", align="center", font=("Arial", size, "normal"))
 
     screen.update()
     time.sleep(1 / 30)
 
+time.sleep(0.5)
+
 t.clear()
-t.goto(0, 0)
+t.goto(0, 100)
 t.color(1, 1, 1)
-t.write("Instructions")
+t.write("Instructions", align="center", font=("Arial", 50, "normal"))
+t.goto(0, 0)
+t.write("Player 1 must type their secret location in pixels relative to the origin.", align="center", font=("Arial", 20, "normal"))
+t.goto(0, -50)
+t.write("Player 2 must make 4 guesses of the location.", align="center", font=("Arial", 20, "normal"))
+t.goto(0, -100)
+t.write("Good Luck.", align="center", font=("Arial", 20, "normal"))
 screen.update()
 
-time.sleep(5)
+# time.sleep(5)
 
 t.clear()
 screen.update()
+
+SEA_COLOR = "#a4f4fc"
+LAND_COLOR = "#329925"
+TILE_SIZE = 25
 
 ## Generate background
-screen.bgcolor("#a4f4fc")
-t.color("#888888")
+for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
+    for y in range(int(-SCREEN_HEIGHT / 2), int(SCREEN_HEIGHT / 2), TILE_SIZE):
+        tileX = math.floor(x / TILE_SIZE)
+        tileY = math.floor(y / TILE_SIZE)
+
+        t.penup()
+        t.goto(x, y)
+
+        # if (tileX + tileY) % 2 == 0, set colour to land colour
+        t.pencolor(SEA_COLOR)
+        t.fillcolor(SEA_COLOR)
+        for i in range(1 - (tileX + tileY) % 2):
+            t.pencolor(LAND_COLOR)
+            t.fillcolor(LAND_COLOR)
+
+        t.begin_fill()
+        t.pendown()
+        for i in range(4):
+            t.forward(TILE_SIZE)
+            t.left(90)
+        t.end_fill()
+        t.penup()
+
+## Generate grid
+t.color("#000000")
+t.pensize(3)
 t.penup()
-t.goto(-10, 0)
+t.goto(-SCREEN_WIDTH, 0)
 t.pendown()
-t.goto(10, 0)
+t.goto(SCREEN_WIDTH, 0)
 
 t.penup()
-t.goto(0, 10)
+t.goto(0, SCREEN_HEIGHT)
 t.pendown()
-t.goto(0, -10)
+t.goto(0, -SCREEN_HEIGHT)
 t.penup()
+
+for x in range(0, SCREEN_WIDTH, 50):
+    t.penup()
+    t.goto(x, -5)
+    t.pendown()
+    t.goto(x, 5)
+
+    t.penup()
+    t.goto(x, -30)
+    t.write(str(x))
+
+for x in range(0, -SCREEN_WIDTH, -50):
+    t.penup()
+    t.goto(x, -5)
+    t.pendown()
+    t.goto(x, 5)
+
+    t.penup()
+    t.goto(x, -30)
+    t.write(str(x))
+
+for y in range(0, SCREEN_HEIGHT, 50):
+    t.penup()
+    t.goto(-5, y)
+    t.pendown()
+    t.goto(5, y)
+
+    t.penup()
+    t.goto(-30, y)
+    t.write(str(y))
+
+for y in range(0, -SCREEN_HEIGHT, -50):
+    t.penup()
+    t.goto(-5, y)
+    t.pendown()
+    t.goto(5, y)
+
+    t.penup()
+    t.goto(-30, y)
+    t.write(str(y))
 
 screen.update()
 
@@ -79,6 +155,10 @@ def getScore(guessX, guessY):
     distance = getDistance(guessX, guessY)
     score = (max(0, 200 - distance) ** 2) / 4000
     return score
+
+def drawGuess(guessX, guessY):
+    markerTurtle.penup()
+    markerTurtle.goto(guessX, guessY)
 
 markerTurtle = turtle.Turtle()
 markerTurtle.hideturtle()
@@ -112,7 +192,7 @@ markerTurtle.stamp()
 
 screen.update()
 
-time.sleep(1)
+time.sleep(5)
 
 ## Game results
 t.clearstamps()
