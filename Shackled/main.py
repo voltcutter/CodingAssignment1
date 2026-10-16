@@ -51,6 +51,13 @@ PALM_LEAVES_TILT = 0.4
 PALM_LEAVES_COUNT_MIN = 3
 PALM_LEAVES_COUNT_MAX = 5
 
+FLOWER_CHANCE = 10
+FLOWER_BUD_COLOUR = "#fff200"
+FLOWER_BUD_RADIUS = 5
+FLOWER_PETAL_RADIUS = 5
+FLOWER_PETAL_OFFSET = 2
+FLOWER_PETAL_COUNT = 5
+
 # Set up the screen object
 turtle.setup(SCREEN_WIDTH, SCREEN_HEIGHT)
 screen = turtle.Screen()
@@ -58,6 +65,7 @@ screen.title(WINDOW_TITLE)
 screen.tracer(0)
 
 ## Splash screen
+
 # intro
 # draws white text on a black screen
 # the white text enlarges and fades out over 30 framess
@@ -96,7 +104,7 @@ main_turtle.write("Good Luck.", align="center", font=("Arial", 20, "normal"))
 
 screen.update()
 
-# time.sleep(5)
+time.sleep(5)
 
 main_turtle.clear()
 screen.update()
@@ -165,7 +173,7 @@ def get_total_metaball_value(tileX, tileY):
         inverse_distance = 1 / distance
         metaball_value = inverse_distance * METABALL_MULTIPLIER
 
-        total_metaball_value = total_metaball_value + metaball_value
+        total_metaball_value = total_metaball_value + metaball_value # use accumulator pattern to accumulate the total metaball value
     return total_metaball_value
 
 def determine_colour_of_tile(tileX, tileY):
@@ -200,6 +208,10 @@ def determine_colour_of_tile(tileX, tileY):
     return colour
 
 def draw_rectangle(turtle, min_x, min_y, max_x, max_y):
+    """
+    Draws the outline of a rectangle with the bottom-left corner at screen position (min_x, min_y),
+    and the top-right corner at screen position (max_x, max_y).
+    """
     turtle.penup()
     turtle.goto(min_x, min_y)
     turtle.pendown()
@@ -209,6 +221,10 @@ def draw_rectangle(turtle, min_x, min_y, max_x, max_y):
     turtle.penup()
 
 def draw_rectangle_fill(turtle, min_x, min_y, max_x, max_y, fill_colour):
+    """
+    Draws a filled rectangle with the bottom-left corner at screen position (min_x, min_y),
+    and the top-right corner at screen position (max_x, max_y).
+    """
     turtle.penup()
     turtle.goto(min_x, min_y)
     turtle.fillcolor(fill_colour)
@@ -280,31 +296,29 @@ def draw_palm_tree(tileX, tileY):
     main_turtle.pensize(PALM_LEAVES_THICKNESS)
     palm_leaves_count = random.randint(PALM_LEAVES_COUNT_MIN, PALM_LEAVES_COUNT_MAX)
     for i in range(palm_leaves_count):
+        # represents the current displacement from the trunk tip
         current_displacement_x = 0
         current_displacement_y = 0
+        # represents the direction in which the palm leaves should move
         base_displacement_x = PALM_LEAVES_SEGMENT_LENGTH * math.cos(angle)
         base_displacement_y = PALM_LEAVES_SEGMENT_LENGTH * math.sin(angle)
+
         main_turtle.penup()
         main_turtle.goto(trunk_tip_x, trunk_tip_y)
         main_turtle.pendown()
         for j in range(PALM_LEAVES_SEGMENTS):
+            # the y displacement is multiplied by a tilt value to make it appear more 3d and subtracted by the droop amount, which increases every segment to represent a drooping leaf
             tilted_displacement_y = base_displacement_y * PALM_LEAVES_TILT - PALM_LEAVES_DROOP * (j + PALM_LEAVES_DROOP_INDEX_OFFSET)
             main_turtle.goto(
                 trunk_tip_x + current_displacement_x + base_displacement_x,
                 trunk_tip_y + current_displacement_y + tilted_displacement_y
             )
+            # use the accumulator pattern and add the displacement that we just drew
             current_displacement_x = current_displacement_x + base_displacement_x
             current_displacement_y = current_displacement_y + tilted_displacement_y
         angle = angle + (math.pi * 2) / palm_leaves_count
 
     main_turtle.penup()
-
-FLOWER_CHANCE = 10
-FLOWER_BUD_COLOUR = "#fff200"
-FLOWER_BUD_RADIUS = 5
-FLOWER_PETAL_RADIUS = 5
-FLOWER_PETAL_OFFSET = 2
-FLOWER_PETAL_COUNT = 5
 
 def draw_flower(tileX, tileY):
     """
@@ -313,6 +327,7 @@ def draw_flower(tileX, tileY):
     x = tileX * TILE_SIZE + TILE_SIZE // 2
     y = tileY * TILE_SIZE + TILE_SIZE // 2
 
+    # draw all the petals first, with a random RGB colour.
     angle = random.random()
     main_turtle.pensize(1)
     petalR = random.random()
@@ -334,6 +349,7 @@ def draw_flower(tileX, tileY):
 
         angle = angle + math.pi * 2 / FLOWER_PETAL_COUNT
 
+    # draw the bud last so that it goes over the petals
     main_turtle.penup()
     main_turtle.goto(x, y - FLOWER_BUD_RADIUS)
     main_turtle.setheading(0)
@@ -352,6 +368,11 @@ loading_turtle = turtle.Turtle()
 loading_turtle.hideturtle()
 
 def draw_loading_screen(is_generating_vegetation, progress):
+    """
+    Draws the loading screen.
+    If is_generating_vegetation is 1, the text will switch to 'Generating vegetation...' instead.
+    """
+
     draw_rectangle_fill(loading_turtle, -SCREEN_WIDTH // 2, -SCREEN_HEIGHT // 2, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, "#000000")
 
     loading_turtle.color("#ffffff")
@@ -381,7 +402,7 @@ for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
 
         progress = progress + 1
         normalised_progress = progress / ((SCREEN_WIDTH / TILE_SIZE) * (SCREEN_HEIGHT / TILE_SIZE))
-        for i in range(1 - clamp(progress % 2048, 0, 1)):
+        for i in range(1 - clamp(progress % 2048, 0, 1)): # only draw every 2048 iterations to save performance
             loading_turtle.clear()
             draw_loading_screen(0, normalised_progress)
             screen.update()
@@ -416,7 +437,7 @@ for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
 
         progress = progress + 1
         normalised_progress = progress / ((SCREEN_WIDTH / TILE_SIZE) * (SCREEN_HEIGHT / TILE_SIZE))
-        for i in range(1 - clamp(progress % 2048, 0, 1)):
+        for i in range(1 - clamp(progress % 2048, 0, 1)): # only draw every 2048 iterations to save performance
             loading_turtle.clear()
             draw_loading_screen(1, normalised_progress)
             screen.update()
@@ -520,16 +541,21 @@ marker_turtle.penup()
 for i in range(4):
     guessX = screen.numinput("Guess", "Please put the x coordinate of your guess.")
     guessY = screen.numinput("Guess", "Please put the y coordinate of your guess.")
+
+    # draw guess
     draw_guess(guessX, guessY)
 
+    # draw score and distance of that guess
     marker_turtle.goto(guessX + 50, guessY)
     score = get_score(guessX, guessY)
     distance = get_distance(guessX, guessY)
     marker_turtle.write(f"Score: {score:.2f}, Distance: {distance:.2f}")
 
+    # use accumulator pattern to track total score and distance
     total_score = total_score + score
     total_distance = total_distance + distance
 
+    # use min to find the closest distance
     closest_distance = min(closest_distance, distance)
 
     screen.update()
@@ -541,6 +567,7 @@ def draw_smiley(x, y):
 
     marker_turtle.setheading(0)
 
+    # smiley yellow face
     marker_turtle.penup()
     marker_turtle.goto(x, y - smiley_radius)
     marker_turtle.pencolor("#ffe100")
@@ -552,6 +579,7 @@ def draw_smiley(x, y):
     marker_turtle.end_fill()
     marker_turtle.penup()
 
+    # eyes
     marker_turtle.pencolor("#000000")
     marker_turtle.penup()
     marker_turtle.goto(x - 5, y + 10)
@@ -562,6 +590,7 @@ def draw_smiley(x, y):
     marker_turtle.pendown()
     marker_turtle.goto(x + 5, y + 2)
 
+    # smile
     marker_turtle.penup()
     marker_turtle.goto(x + smiley_radius - 5, y)
     marker_turtle.setheading(90)
@@ -585,11 +614,11 @@ main_turtle.goto(0, 100)
 main_turtle.write("Result", align="center", font=("Arial", 30, "normal"))
 
 main_turtle.goto(0, 0)
-main_turtle.write(f"Total Score: {total_score}", align="center", font=("Arial", 15, "normal"))
+main_turtle.write(f"Total Score: {total_score:.2f}", align="center", font=("Arial", 15, "normal"))
 main_turtle.goto(0, -50)
-main_turtle.write(f"Total Distance: {total_distance}", align="center", font=("Arial", 15, "normal"))
+main_turtle.write(f"Total Distance: {total_distance:.2f}", align="center", font=("Arial", 15, "normal"))
 main_turtle.goto(0, -100)
-main_turtle.write(f"Best Distance: {closest_distance}", align="center", font=("Arial", 15, "normal"))
+main_turtle.write(f"Best Distance: {closest_distance:.2f}", align="center", font=("Arial", 15, "normal"))
 
 screen.update()
 
