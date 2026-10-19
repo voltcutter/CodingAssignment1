@@ -6,8 +6,8 @@ import time
 
 ## Game Constants
 SCREEN_WIDTH = 900
-SCREEN_HEIGHT = 450
-WINDOW_TITLE = "Hide & Seek"
+SCREEN_HEIGHT = 600
+WINDOW_TITLE = "Code & Seek"
 
 ## Terrain Constants
 SEED = time.time()
@@ -34,7 +34,7 @@ LAND_COLOUR = "#329925"
 LAND_COLOUR_ALT = "#2F7918"
 
 ## Vegetation Constants
-PALM_TREE_CHANCE = 5
+PALM_TREE_CHANCE = 1
 PALM_TRUNK_MAX_LEANING_ANGLE = 7
 PALM_TRUNK_THICKNESS = 3
 PALM_TRUNK_COLOUR = "#421C0A"
@@ -51,7 +51,7 @@ PALM_LEAVES_TILT = 0.4
 PALM_LEAVES_COUNT_MIN = 3
 PALM_LEAVES_COUNT_MAX = 5
 
-FLOWER_CHANCE = 10
+FLOWER_CHANCE = 1
 FLOWER_BUD_COLOUR = "#fff200"
 FLOWER_BUD_RADIUS = 5
 FLOWER_PETAL_RADIUS = 5
@@ -94,7 +94,7 @@ time.sleep(0.5)
 main_turtle.clear()
 main_turtle.goto(0, 100)
 main_turtle.color(1, 1, 1)
-main_turtle.write("Hide & Seek", align="center", font=("Arial", 50, "normal"))
+main_turtle.write("Code & Seek", align="center", font=("Arial", 50, "normal"))
 main_turtle.goto(0, 0)
 main_turtle.write("Player 1 must type their secret location in pixels relative to the origin.", align="center", font=("Arial", 20, "normal"))
 main_turtle.goto(0, -50)
@@ -113,13 +113,13 @@ screen.update()
 """
 EXPLANATION OF TERRAIN GENERATION:
 
-To generate terrain, we will use a concept called 'metaballs'.
+To generate terrain, I will use a concept called 'metaballs'.
 Metaballs are commonly used to create organic looking shapes from just a few points.
-It's common in particle simulations to smooth out the shape of the particles, which is where I learned this concept!
+It's common in 2d particle simulations to smooth out the shape of the particles, which is where I learned this concept!
 
 A 'metaball' is a point in space that has a value that decreases as the distance to a sample point 'P' increases.
 In other words, the metaball value is inversely proportional to the distance.
-In this specific game, our metaball function is as follows:
+In this specific game, the metaball function is as follows:
 
 f(x) = k/x
 
@@ -127,18 +127,91 @@ where 'f' represents the metaball function,
       'x' represents the distance between the metaball and 'P',
       'k' represents the metaball multiplier. (defined in the terrain constants)
 
-To determine the 'total metaball value' at P, we will find f(x) for all metaballs and get the sum.
+To determine the 'total metaball value' at P, the program will find f(x) for all metaballs and get the sum.
 In other words, the sum of all metaball functions at P is defined as the 'total metaball value'.
 This value is then used to determine the colour of the tile at P.
 
 If the total metaball value is greater than the beach threshold, the colour is the beach colour.
 If the total metaball value is greater than the land threshold, the colour is the land colour.
 Otherwise, it's water colour.
+
+------
+
+DETAILED EXPLANATION OF IMPLEMENTATION:
+In this specific game, I chose to use a tile-based approach.
+Since turtle is a vector based drawing program, I decided the simplest way to represent terrain is using square tiles.
+Each square tile can have a certain colour, and when these tiles are placed together, it will look like terrain.
+
+To generate the whole map, the colour of each square tile is calculated one at a time through the usage of a for loop, and the colour is then drawn as a tile.
+The for loop iterates through all possible tile positions, and the colour of each tile is determined by calling the determine_colour_of_tile() method.
+
+In this method, the colour of the tile is determined using the following steps:
+1. Get the total metaball value at the tile's position
+2. Use the total metaball value to determine the colour of the tile
+
+In step one, the total metaball value is calculated.
+Firstly, the seed must be set to a constant value (SEED constant determined at the start of the code) at the beginning of this method.
+The reason is because since the program is iterating through all the tiles, the random metaball positions
+must be the same for all the tiles, or else the map would just look like random noise.
+Setting the seed does two things: it ensures that the random numbers being generated will be consistent, and also resets the state of the random generator. These two things combined makes the random numbers generated become consistent for all tiles.
+After this, the program repeats these steps for the amount of metaballs that there are. (NUM_METABALLS)
+1a. generate a random metaball position
+1b. calculate the distance and inverse distance
+1c. multiply the inverse distance by the metaball multiplier and add it to the total metaball value
+Once the loop is done, the total metaball value is returned.
+
+In step two, the colour of the tile is determined.
+This is done by using the total metaball value and comparing it to the thresholds.
+First, the sea colour is calculated and set as the colour.
+The sea colour is a colour interpolated between the deep and shallow sea colours, depending on its deepness.
+The deepness is calculated using inverse linear interpolation between the deep sea threshold and beach threshold.
+A t value is then created using the deepness value, which is within the range [0.5, 1]. This is because the shallow sea colour is actually very close to the beach colour, and a tile just below the water would appear almost the same as the beach, which is unwanted.
+Then, the t value is increased if the sum of the x and y tile coordinates, integer divided by two, is even. This produces a checkerboard pattern which looks aesthetically pleasing. There is integer division by two because this operation would make each checker two tiles large.
+Then, the sea colour is interpolated between the shallow and deep sea colours, using the deepness as the t value.
+The resulting colour is then set as the tile's colour.
+
+Now, it is time to determine if the tile is actually above the water.
+If the total metaball value is above BEACH_THRESHOLD, the tile is considered beach.
+    - For this assignment, an if statement is disallowed.
+    - Instead, a for loop could be used in its place to achieve an equivilant effect.
+    - As I learned in class, the inner block of a for loop runs for the numbers contained within the builtin 'range' method.
+    - However, what if the range contains 0 numbers? This is possible if range(x) is used where x < 1. This will cause the inner block to not run.
+    - Therefore, by using range(clamp(math.ceil(total_metaball_value - BEACH_THRESHOLD), 0, 1)), the inner block will run if and only if the total metaball value is above the BEACH_THRESHOLD.
+    - This can be applied to any other condition, as long as the value is < 1 if it is false and >= 1 if it is true.
+The colour, by default is BEACH_COLOUR. However, the same checkerboard condition from above is applied here too. In that case, it is BEACH_COLOUR_ALT.
+This overrides the water colour from before.
+
+If the total metaball value is above LAND_THRESHOLD, the tile is considered land. (The same for loop logic is applied here as well)
+Just like the beach, the colour is either LAND_COLOUR or LAND_COLOUR_ALT.
+This overrides the beach colour.
+
+Then, draw_tile is used which simply draws a tile of the colour that was determined in these past steps.
+
+For vegetation, the draw_palm_tree and draw_flower methods are used.
+Palm trees can only be drawn on beach, since palm trees only grow on sand.
+Flowers can only be drawn on land, since flowers only grow on grass.
+To determine if the tile is sand/grass, the same method from above is used.
+If the condition is met, there is a chance (defined in the constants) that the respective vegetation is drawn.
+
+After this, the map is fully drawn!
+
+------
+
+PERSONAL STATEMENT:
+
+I decided to make some sort of tile-based terrain for this assignment, as it would be interesting.
+From this, I knew that some sort of noise algorithm would need to be used. It would be some algorithm that could return a random value given a point.
+The first thing I thought of was "Perlin Noise", which is a form of smooth noise that I have used in the past. This is commonly used in games to generate terrain, and game engines often have built-in implementations for perlin noise, such as Mathf.PerlinNoise method from unity.
+However, I then found out that the python 'random' module does not have a built-in implementation of perlin noise. I also do not know how to implement perlin noise, so I decided to not use perlin noise.
+Then, I thought about generating pure random values and interpolating between them to create smooth noise. However, that may look too uninteresting/patternless.
+Then I remembered about the existence of metaballs. I had used them in the past and I remember how they were really good for blending together particles.
+They are also really simple to implement and understand.
+So, I decided to use metaballs for this assignment.
 """
 # math utility methods
 def clamp(x, a, b):
     """
-    Clamps x between minimum and maximum
+    Clamps x between a and b
     """
     return max(a, min(x, b))
 def lerp(a, b, t):
@@ -153,7 +226,7 @@ def inverse_lerp(a, b, n):
     return clamp((n - a) / (b - a), 0, 1)
 def blend_colour(r1, g1, b1, r2, g2, b2, t):
     """
-    Linearly interpolates between two colours, a and b, by t
+    Linearly interpolates between two colours by t
     """
     return (lerp(r1, r2, t), lerp(g1, g2, t), lerp(b1, b2, t))
 
@@ -184,7 +257,7 @@ def determine_colour_of_tile(tileX, tileY):
 
     deepness = 1 - inverse_lerp(DEEP_SEA_THRESHOLD, BEACH_THRESHOLD, total_metaball_value) # calculate deepness of water
     t_value = deepness * 0.5 + 0.5 # adjusts the t value to be within the range [0.5, 1], making it appear more visually appealing
-    for i in range(1 - ((x // 2 + y // 2) % 2)): # if the sum of the x // 2 and y // 2 coordinates is even, choose the colour of a slightly deeper depth (this creates a checkboard pattern where each checker is 2 tiles large)
+    for i in range(1 - ((tileX // 2 + tileY // 2) % 2)): # if the sum of the tileX // 2 and tileY // 2 coordinates is even, choose the colour of a slightly deeper depth (this creates a checkboard pattern where each checker is 2 tiles large)
         t_value = clamp(t_value + 0.1, 0, 1)
     colour = blend_colour(SEA_COLOUR_SHALLOW_R, SEA_COLOUR_SHALLOW_G, SEA_COLOUR_SHALLOW_B, SEA_COLOUR_DEEP_R, SEA_COLOUR_DEEP_G, SEA_COLOUR_DEEP_B, t_value)
 
@@ -192,17 +265,17 @@ def determine_colour_of_tile(tileX, tileY):
     # if total_metaball_value > BEACH_THRESHOLD, the expression will evaluate to a value that is at least 1, which runs the for loop and overwrites the colour to beach colour.
     # otherwise, it will evaluate to a value below 1, which does not run the for loop, and keeps it as sea colour.
     # an if statement is much more optimal here, however, if statements are disallowed.
-    for i in range(math.ceil(total_metaball_value - BEACH_THRESHOLD)):
+    for i in range(clamp(math.ceil(total_metaball_value - BEACH_THRESHOLD), 0, 1)):
         colour = BEACH_COLOUR
         # same checkboard condition from above
-        for j in range(1 - ((x // 2 + y // 2) % 2)):
+        for j in range(1 - ((tileX // 2 + tileY // 2) % 2)):
             colour = BEACH_COLOUR_ALT
 
     # same condition from above, adjusted for land threshold and land colour
-    for i in range(math.ceil(total_metaball_value - LAND_THRESHOLD)):
+    for i in range(clamp(math.ceil(total_metaball_value - LAND_THRESHOLD), 0, 1)):
         colour = LAND_COLOUR
         # same checkboard condition from above
-        for j in range(1 - ((x // 2 + y // 2) % 2)):
+        for j in range(1 - ((tileX // 2 + tileY // 2) % 2)):
             colour = LAND_COLOUR_ALT
 
     return colour
@@ -313,7 +386,7 @@ def draw_palm_tree(tileX, tileY):
                 trunk_tip_x + current_displacement_x + base_displacement_x,
                 trunk_tip_y + current_displacement_y + tilted_displacement_y
             )
-            # use the accumulator pattern and add the displacement that we just drew
+            # use the accumulator pattern and add the displacement that it just drew
             current_displacement_x = current_displacement_x + base_displacement_x
             current_displacement_y = current_displacement_y + tilted_displacement_y
         angle = angle + (math.pi * 2) / palm_leaves_count
@@ -413,7 +486,7 @@ for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
         tileX = math.floor(x / TILE_SIZE)
         tileY = math.floor(y / TILE_SIZE)
         total_metaball_value = get_total_metaball_value(tileX, tileY)
-        random.seed(SEED + time.time())
+        random.seed(SEED + progress)
 
         can_draw_palm_tree = 0
         for i in range(clamp(math.ceil(total_metaball_value - BEACH_THRESHOLD), 0, 1)): # if the total metaball value is above the beach threshold, there's a chance to draw a palm tree.
@@ -546,10 +619,10 @@ for i in range(4):
     draw_guess(guessX, guessY)
 
     # draw score and distance of that guess
-    marker_turtle.goto(guessX + 50, guessY)
+    marker_turtle.goto(guessX + 25, guessY)
     score = get_score(guessX, guessY)
     distance = get_distance(guessX, guessY)
-    marker_turtle.write(f"Score: {score:.2f}, Distance: {distance:.2f}")
+    marker_turtle.write(f"Guess #{i + 1}: Score: {score:.2f}, Distance: {round(distance)}px")
 
     # use accumulator pattern to track total score and distance
     total_score = total_score + score
@@ -611,14 +684,14 @@ marker_turtle.clear()
 screen.bgcolor("#000000")
 main_turtle.color("#ffffff")
 main_turtle.goto(0, 100)
-main_turtle.write("Result", align="center", font=("Arial", 30, "normal"))
+main_turtle.write("Final Summary Screen", align="center", font=("Arial", 30, "normal"))
 
 main_turtle.goto(0, 0)
 main_turtle.write(f"Total Score: {total_score:.2f}", align="center", font=("Arial", 15, "normal"))
 main_turtle.goto(0, -50)
-main_turtle.write(f"Total Distance: {total_distance:.2f}", align="center", font=("Arial", 15, "normal"))
+main_turtle.write(f"Total Distance: {round(total_distance)}px", align="center", font=("Arial", 15, "normal"))
 main_turtle.goto(0, -100)
-main_turtle.write(f"Best Distance: {closest_distance:.2f}", align="center", font=("Arial", 15, "normal"))
+main_turtle.write(f"Best (closest) Guess: {round(closest_distance)}px", align="center", font=("Arial", 15, "normal"))
 
 screen.update()
 
