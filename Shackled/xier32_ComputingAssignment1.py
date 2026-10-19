@@ -34,29 +34,29 @@ LAND_COLOUR = "#329925"
 LAND_COLOUR_ALT = "#2F7918"
 
 ## Vegetation Constants
-PALM_TREE_CHANCE = 1
-PALM_TRUNK_MAX_LEANING_ANGLE = 7
-PALM_TRUNK_THICKNESS = 3
+PALM_TREE_CHANCE = 1 # chance to generate a palm tree per valid tile from 0-100
+PALM_TRUNK_MAX_LEANING_ANGLE = 7 # the maximum change in angle of each palm trunk segment in degrees
+PALM_TRUNK_THICKNESS = 3 # the width of the pen when drawing the palm trunk
 PALM_TRUNK_COLOUR = "#421C0A"
 PALM_TRUNK_COLOUR_ALT = "#6C3615"
-PALM_TRUNK_SEGMENTS = 5
-PALM_TRUNK_SEGMENT_LENGTH = 4
-PALM_LEAVES_THICKNESS = 2
+PALM_TRUNK_SEGMENTS = 5 # the amount of segments for the palm trees
+PALM_TRUNK_SEGMENT_LENGTH = 4 # the length of each segment in pixels
+PALM_LEAVES_THICKNESS = 2 # the width of the pen when drawing palm leaves
 PALM_LEAVES_COLOUR = "#5FC039"
-PALM_LEAVES_SEGMENTS = 3
-PALM_LEAVES_SEGMENT_LENGTH = 6
-PALM_LEAVES_DROOP = 2
-PALM_LEAVES_DROOP_INDEX_OFFSET = -1
-PALM_LEAVES_TILT = 0.4
+PALM_LEAVES_SEGMENTS = 3 # the amount of palm leaves segments
+PALM_LEAVES_SEGMENT_LENGTH = 6 # the length of each palm leaf segment in pixels
+PALM_LEAVES_DROOP = 2 # the amount that each palm leaf segment droops down
+PALM_LEAVES_DROOP_INDEX_OFFSET = -1 # the lower this value, the higher up the palm leaves will start at before drooping down.
+PALM_LEAVES_TILT = 0.4 # the amount of horizontal tilt of the palm leaves. a smaller value will give more of a 3d isometric effect.
 PALM_LEAVES_COUNT_MIN = 3
 PALM_LEAVES_COUNT_MAX = 5
 
-FLOWER_CHANCE = 1
+FLOWER_CHANCE = 1 # chance to generate a flower per valid tile from 0-100
 FLOWER_BUD_COLOUR = "#fff200"
-FLOWER_BUD_RADIUS = 5
-FLOWER_PETAL_RADIUS = 5
-FLOWER_PETAL_OFFSET = 2
-FLOWER_PETAL_COUNT = 5
+FLOWER_BUD_RADIUS = 5 # radius of the flower bud in pixels
+FLOWER_PETAL_RADIUS = 5 # radius of the petals in pixels
+FLOWER_PETAL_OFFSET = 2 # the offset distance between the flower bud and the flower petals
+FLOWER_PETAL_COUNT = 5 # the amount of flower petals
 
 # Set up the screen object
 turtle.setup(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -197,7 +197,7 @@ After this, the map is fully drawn!
 
 ------
 
-PERSONAL STATEMENT:
+Decision making:
 
 I decided to make some sort of tile-based terrain for this assignment, as it would be interesting.
 From this, I knew that some sort of noise algorithm would need to be used. It would be some algorithm that could return a random value given a point.
@@ -445,9 +445,10 @@ def draw_loading_screen(is_generating_vegetation, progress):
     Draws the loading screen.
     If is_generating_vegetation is 1, the text will switch to 'Generating vegetation...' instead.
     """
-
+    # draw the black background
     draw_rectangle_fill(loading_turtle, -SCREEN_WIDTH // 2, -SCREEN_HEIGHT // 2, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, "#000000")
 
+    # draw big generating text
     loading_turtle.color("#ffffff")
     loading_turtle.penup()
     loading_turtle.goto(0, -25)
@@ -456,30 +457,38 @@ def draw_loading_screen(is_generating_vegetation, progress):
     for i in range(is_generating_vegetation):
         loading_turtle.write("Generating vegetation...", align="center", font=("Arial", 50, "normal"))
 
+    # draw "this may take a few seconds"
     loading_turtle.goto(0, -50)
     loading_turtle.write("(This may take a few seconds)", align="center", font=("Arial", 14, "normal"))
 
+    # draw progress bar
     loading_turtle.pencolor("#ffffff")
-    draw_rectangle(loading_turtle, -100, -90, 100, -70)
-    draw_rectangle_fill(loading_turtle, -100, -90, -100 + lerp(0, 200, progress), -70, "#ffffff")
+    draw_rectangle(loading_turtle, -100, -90, 100, -70) # outline of the progress bar
+    draw_rectangle_fill(loading_turtle, -100, -90, -100 + lerp(0, 200, progress), -70, "#ffffff") # filling bar of the progress bar
 
+# Draw the loading screen with zero progress at the start
 draw_loading_screen(0, 0)
 screen.update()
 
+# Start generating terrain
 progress = 0
 for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
     for y in range(int(-SCREEN_HEIGHT / 2), int(SCREEN_HEIGHT / 2), TILE_SIZE):
+        # Draw the terrain tile
         tileX = math.floor(x / TILE_SIZE)
         tileY = math.floor(y / TILE_SIZE)
         draw_tile(tileX, tileY)
 
+        # Use accumulator pattern on the progress
         progress = progress + 1
+        # Normalised progress is the progress of the generation from 0-1, used for draw_loading_screen
         normalised_progress = progress / ((SCREEN_WIDTH / TILE_SIZE) * (SCREEN_HEIGHT / TILE_SIZE))
         for i in range(1 - clamp(progress % 2048, 0, 1)): # only draw every 2048 iterations to save performance
             loading_turtle.clear()
             draw_loading_screen(0, normalised_progress)
             screen.update()
 
+# Start generating vegetation
 progress = 0
 for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
     for y in range(int(-SCREEN_HEIGHT / 2), int(SCREEN_HEIGHT / 2), TILE_SIZE):
@@ -488,27 +497,33 @@ for x in range(int(-SCREEN_WIDTH / 2), int(SCREEN_WIDTH / 2), TILE_SIZE):
         total_metaball_value = get_total_metaball_value(tileX, tileY)
         random.seed(SEED + progress)
 
+        # determine if a palm tree could be drawn
         can_draw_palm_tree = 0
         for i in range(clamp(math.ceil(total_metaball_value - BEACH_THRESHOLD), 0, 1)): # if the total metaball value is above the beach threshold, there's a chance to draw a palm tree.
             can_draw_palm_tree = 1
         for i in range(clamp(math.ceil(total_metaball_value - LAND_THRESHOLD), 0, 1)): # if the total metaball value is above the land threshold, there's no longer a chance to draw a palm tree, because palm trees don't grow on grass
             can_draw_palm_tree = 0
 
+        # draw the palm tree with a chance, if it could be drawn.
         for i in range(can_draw_palm_tree):
             random_number = random.randint(1, 100)
             for j in range(clamp(random_number - (100 - PALM_TREE_CHANCE), 0, 1)):
                 draw_palm_tree(tileX, tileY)
 
+        # determine if a flower could be drawn
         can_draw_flower = 0
         for i in range(clamp(math.ceil(total_metaball_value - LAND_THRESHOLD), 0, 1)): # flowers can be drawn on land/grass.
             can_draw_flower = 1
 
+        # draw the flower with a chance, if it could be drawn
         for i in range(can_draw_flower):
             random_number = random.randint(1, 100)
             for j in range(clamp(random_number - (100 - FLOWER_CHANCE), 0, 1)):
                 draw_flower(tileX, tileY)
 
+        # use accumulator pattern on the progress
         progress = progress + 1
+        # Normalised progress is the progress of the generation from 0-1, used for draw_loading_screen
         normalised_progress = progress / ((SCREEN_WIDTH / TILE_SIZE) * (SCREEN_HEIGHT / TILE_SIZE))
         for i in range(1 - clamp(progress % 2048, 0, 1)): # only draw every 2048 iterations to save performance
             loading_turtle.clear()
@@ -585,15 +600,24 @@ total_distance = 0
 closest_distance = math.inf
 
 def get_distance(guessX, guessY):
+    """
+    Returns the euclidian distance between the secret and the guess.
+    """
     distance = math.sqrt((secretX - guessX) ** 2 + (secretY - guessY) ** 2)
     return distance
 
 def get_score(guessX, guessY):
+    """
+    Returns the score of the guess.
+    """
     distance = get_distance(guessX, guessY)
     score = (max(0, 200 - distance) ** 2) / 4000
     return score
 
 def draw_guess(guessX, guessY):
+    """
+    Draws a strange shape at screen position (guessX, guessY)
+    """
     marker_turtle.penup()
     marker_turtle.goto(guessX, guessY)
 
@@ -636,6 +660,9 @@ for i in range(4):
 
 ## Reveal secret
 def draw_smiley(x, y):
+    """
+    Draws a yellow smiley face at screen position (x, y)
+    """
     smiley_radius = 25
 
     marker_turtle.setheading(0)
@@ -678,14 +705,17 @@ screen.update()
 time.sleep(5)
 
 ## Game results
+# clear all drawings
 main_turtle.clear()
 marker_turtle.clear()
 
+# Display a black final summary screen
 screen.bgcolor("#000000")
 main_turtle.color("#ffffff")
 main_turtle.goto(0, 100)
 main_turtle.write("Final Summary Screen", align="center", font=("Arial", 30, "normal"))
 
+# Display the total score, total distance, best (closest) guess.
 main_turtle.goto(0, 0)
 main_turtle.write(f"Total Score: {total_score:.2f}", align="center", font=("Arial", 15, "normal"))
 main_turtle.goto(0, -50)
@@ -693,6 +723,7 @@ main_turtle.write(f"Total Distance: {round(total_distance)}px", align="center", 
 main_turtle.goto(0, -100)
 main_turtle.write(f"Best (closest) Guess: {round(closest_distance)}px", align="center", font=("Arial", 15, "normal"))
 
+# update the screen to display the game's results
 screen.update()
 
 ## End of your code
